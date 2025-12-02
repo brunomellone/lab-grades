@@ -4,6 +4,8 @@ author: "Bruno Mellone"
 format: html
 ---
 
+Link to GitHub repository: https://github.com/brunomellone/lab-grades
+
 ```{r}
 library(here)
 library(dplyr)
@@ -67,7 +69,7 @@ grades <- read_delim(here("data", "grades.csv"),
   na = "unknown")
 ```
 
-# 2 Student population analysis
+# 2. Student population analysis
 
 Question 5
 
@@ -88,6 +90,81 @@ students |>
   labs(x = "group", y = "proportion of students", fill = "sex")
 
 ```
+
+Question 7
+
+```{r}
+library(lubridate)
+
+students_new <- students |>
+  mutate(
+    birth_date = date(birth_date),
+    age = time_length(today() - birth_date, unit = "year") |> round()
+    )
+
+students_new |>
+  ggplot(aes(x = age)) +
+  geom_histogram(binwidth =1) +
+  labs(x = "age (years)", y = "number of students")
+```
+
+```{r}
+students_new |>
+  summarise(median_age = median(age), .by = group) |>
+  mutate(median_age = round(median_age))
+```
+
+```{r}
+students_new |>
+  slice_max(age, n = 1, by = group) |>
+  select(id, sex, age) |>
+  arrange(desc(age)) |>
+  knitr::kable()
+```
+
+
+
+# 3. Simple grade analysis
+
+Question 10
+```{r}
+grades |>
+  filter(!is.na(grade)) |>
+  summarise(n_grades = n())
+```
+
+The data set contains `grades$n_grades`
+
+Question 11
+```{r}
+grades |>
+  filter(!is.na(grade)) |>
+  inner_join(courses, by = "course_id") |>
+  filter(course == "Medicine and Healing Arts") |>
+  inner_join(students, by = "id") |>
+  summarise(mean_grade = mean(grade), .by = group) |>
+  ggplot(aes(x = group, y = mean_grade)) +
+  geom_col() +
+  labs(x = "group", y = "average grade in Medicine and Healing Arts")
+```
+Question 12
+
+```{r}
+grades |>
+  filter(!is.na(grade)) |>
+  inner_join(courses, by = "course_id") |>
+  ggplot(aes(x = grade)) +
+  geom_histogram(binwidth = 1) +
+  facet_wrap(~ module) +
+  labs(x = "grade", y = "number of grades")
+```
+
+Question 14
+The distribution of the grades in modules 1 and 2 seem to be normally distributed. Module 1's distribution is around the mean of 9 and module 2 has a higher mean of 12. 
+
+However, the graph of module 3 can lead us to the conclusion that it was perhaps the easiest module as more than 3000 students had over 13 and grades were generally better, when compared to other models. 
+
+We could therefore conclude that module 3 had a higher average grade. This could lead us to believe that it was either easier or that students studied harder for it. 
 
 
 
