@@ -234,14 +234,14 @@ Question 17
 grades_greek |>
   mutate(group = factor(group)) |>
   ggplot(aes(x = n_grades)) +
-  geom_density(alpha = 0.3) +
+  geom_histogram(binwidth = 1, boundary = 0.5) +
   facet_wrap(~ group) +
   labs(
     x = "number of grades in Greek Mythology and Folklore",
-    y = "density"
+    y = "number of students"
   )
 ```
-
+We notice that the number of grades per group seem relatively similar. However, group 7 is the lowest of them all.
 
 
 Question 18
@@ -258,24 +258,118 @@ grades_greek_sex |>
     sex   = factor(sex)
   ) |>
   ggplot(aes(x = n_grades, fill = sex, colour = sex)) +
-  geom_density(alpha = 0.3) +
-  geom_rug(alpha = 0.2) +
+  geom_histogram(binwidth = 1, boundary = 0.5) +
   facet_wrap(~ group) +
   labs(
     x = "number of grades in Greek Mythology and Folklore",
-    y = "density",
+    y = "number of students",
     fill = "sex",
     colour = "sex"
   )
 ```
-
+This new analysis shows us that on average, female students had more grades than male students. 
 
 Question 19
 
 ```{r}
-
+student_course_means_wide <- grades_clean |>
+  inner_join(courses, by = "course_id") |>
+  summarise(mean_grade = mean(grade), .by = c(id, course)) |>
+  inner_join(students |> select(id, group), by = "id") |>
+  select(id, group, course, mean_grade) |>
+  pivot_wider(names_from = course, values_from = mean_grade)
 ```
 
+```{r}
+student_course_means_wide |>
+  slice_head(n = 5)
+```
+Question 20
+
+```{r}
+student_course_means_group <- student_course_means_wide |>
+  summarise(
+    mean_rhetoric = mean(`Rhetoric and Persuasion`, na.rm = TRUE),
+    mean_music   = mean(`Music and Poetry`,       na.rm = TRUE),
+    .by = group
+  )
+
+student_course_means_group |>
+  ggplot(aes(x = mean_rhetoric, y = mean_music)) +
+  geom_point() +
+  geom_text(aes(label = group), vjust = -0.5) +
+  labs(
+    x = "average grade in Rhetoric and Persuasion (per group)",
+    y = "average grade in Music and Poetry (per group)"
+  )
+```
+While some groups fall far behind a potential trend line (notably groups 12 and 9), the graph displays a potential positive relation between the average grade in Rhetoric and Persuasion and the average grade in mUsic and Poetry. 
+
+
+Question 21
+
+```{r}
+student_course_means_wide |>
+  select(group,
+         `Architecture and Sculpture`,
+         `Combat and Martial Arts of the Gods`) |>
+  drop_na() |>
+  summarise(
+    correlation = cor(`Architecture and Sculpture`,
+                      `Combat and Martial Arts of the Gods`),
+    .by = group
+  )
+```
+
+Question 22
+
+```{r}
+cor_by_group <- student_course_means_wide |>
+  select(group,
+         `Architecture and Sculpture`,
+         `Combat and Martial Arts of the Gods`) |>
+  drop_na() |>
+  summarise(
+    correlation = cor(`Architecture and Sculpture`,
+                      `Combat and Martial Arts of the Gods`),
+    .by = group
+  )
+
+best_group <- cor_by_group |>
+  mutate(abs_cor = abs(correlation)) |>
+  slice_max(abs_cor, n = 1) |>
+  pull(group)
+
+student_course_means_wide |>
+  filter(group == best_group) |>
+  ggplot(aes(x = `Combat and Martial Arts of the Gods`,
+             y = `Architecture and Sculpture`)) +
+  geom_point() +
+  labs(
+    x = "average grade in Combat and Martial Arts of the Gods",
+    y = "average grade in Architecture and Sculpture"
+  )
+```
+
+There seems to be a negative relation between the two. A higher average in Combat and Martial Arts of the Gods is related to a low average in Architecture and Sculpture. 
+
+Question 23
+
+```{r}
+final_grades <- student_course_means_wide |>
+  left_join(students |> select(id, sex), by = "id") |>
+  rowwise() |>
+  mutate(
+    final_grade = mean(c_across(-c(id, group, sex)), na.rm = TRUE)
+  ) |>
+  ungroup() |>
+  select(id, group, sex, final_grade) |>
+  arrange(desc(final_grade))
+
+final_grades |>
+  slice_head(n = 5) |>
+  knitr::kable()
+```
 
 
 
