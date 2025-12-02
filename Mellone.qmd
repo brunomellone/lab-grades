@@ -2,7 +2,6 @@
 title: "Mellone"
 author: "Bruno Mellone"
 format: html
-
 ---
 
 ```{r}
@@ -15,10 +14,11 @@ library(readr)
 here :: i_am("lab-grades.Rproj")
 ```
 # 1.1 Study organization
-
+Question 1
 ```{r}
 courses <- vroom(here("data","courses.csv"))
 ```
+Question 2
 ```{r}
 courses |>
   arrange(course) |>
@@ -27,12 +27,14 @@ courses |>
     identifier       = course_id,
     module           = module,
     `number of exams` = nb_grades
-  )
+  ) |>
+  knitr::kable()
 ```
 
 
 # 1.2 Students
 
+Question 3
 ```{r}
 students <- vroom(here("data","students.csv"))
 cols(
@@ -57,11 +59,36 @@ students <- vroom(
 
 
 # 1.3 Grades
+Question 4
 
 ```{r}
 grades <- read_delim(here("data", "grades.csv"),
   delim = ";",
-  na = "_")
+  na = "unknown")
 ```
+
+# 2 Student population analysis
+
+Question 5
+
+```{r}
+students |>
+  summarise(n = n(), .by = group) |>
+  ggplot(aes(x = group, y = n)) +
+  geom_col() +
+  labs(x = "group", y = "number of students")
+```
+
+Question 6
+```{r}
+students |>
+  summarise(n = n(), .by = c(group, sex)) |>
+  ggplot(aes(x = group, y = n, fill = sex)) +
+  geom_col(position = "fill") +
+  labs(x = "group", y = "proportion of students", fill = "sex")
+
+```
+
+
 
 
