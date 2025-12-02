@@ -1,7 +1,9 @@
 ---
 title: "Mellone"
 author: "Bruno Mellone"
-format: html
+format: 
+  html: default
+  pdf: default
 ---
 
 Link to GitHub repository: https://github.com/brunomellone/lab-grades
@@ -90,6 +92,7 @@ students |>
   labs(x = "group", y = "proportion of students", fill = "sex")
 
 ```
+Overall, groups respect gender parity.
 
 Question 7
 
@@ -107,6 +110,7 @@ students_new |>
   geom_histogram(binwidth =1) +
   labs(x = "age (years)", y = "number of students")
 ```
+This graph shows that students are mostly around their 20s. 
 
 ```{r}
 students_new |>
@@ -165,6 +169,112 @@ The distribution of the grades in modules 1 and 2 seem to be normally distribute
 However, the graph of module 3 can lead us to the conclusion that it was perhaps the easiest module as more than 3000 students had over 13 and grades were generally better, when compared to other models. 
 
 We could therefore conclude that module 3 had a higher average grade. This could lead us to believe that it was either easier or that students studied harder for it. 
+
+
+## 4. Attendance analysis
+
+```{r}
+grades_clean <- grades |>
+  filter(!is.na(grade))
+
+grades_per_student <- grades_clean |>
+  summarise(n_grades = n(), .by = id) |>
+  left_join(students, by = "id") |>
+  select(id, group, sex, n_grades)
+
+grades_per_student |>
+  slice_head(n = 10)
+
+grades_per_student |>
+  summarise(
+    min    = min(n_grades),
+    max    = max(n_grades),
+    mean   = mean(n_grades),
+    median = median(n_grades)
+  ) |>
+  knitr::kable()
+```
+
+Question 14
+
+```{r}
+grades_per_student |>
+  ggplot(aes(x = sex, y = n_grades)) +
+  geom_boxplot() +
+  labs(x = "sex", y = "number of grades")
+```
+The medians are identical for both sex groups and also equal to their third quartile, on 56. The interquartile range is also similar in both groups, hence, we can conclude that the variability in the distribution of the number of grades is similar. However, the female group has more outliers than the male group. 
+
+Question 15
+```{r}
+grades_greek <- grades_clean |>
+  inner_join(courses, by = "course_id") |>
+  filter(course == "Greek Mythology and Folklore") |>
+  summarise(n_grades = n(), .by = id) |>
+  left_join(students, by = "id") |>
+  select(id, group, n_grades)
+
+grades_greek |>
+  slice_head(n = 10)
+```
+
+Question 16
+```{r}
+grades_greek |>
+  summarise(n_students = n(), .by = n_grades) |>
+  ggplot(aes(x = n_grades, y = n_students)) +
+  geom_col() +
+  labs(x = "number of grades in Greek Mythology and Folklore",
+       y = "number of students")
+```
+
+Question 17
+
+```{r}
+grades_greek |>
+  mutate(group = factor(group)) |>
+  ggplot(aes(x = n_grades)) +
+  geom_density(alpha = 0.3) +
+  facet_wrap(~ group) +
+  labs(
+    x = "number of grades in Greek Mythology and Folklore",
+    y = "density"
+  )
+```
+
+
+
+Question 18
+
+Taking the analysis a step further: 
+
+```{r}
+grades_greek_sex <- grades_greek |>
+  left_join(students |> select(id, sex), by = "id")
+
+grades_greek_sex |>
+  mutate(
+    group = factor(group),
+    sex   = factor(sex)
+  ) |>
+  ggplot(aes(x = n_grades, fill = sex, colour = sex)) +
+  geom_density(alpha = 0.3) +
+  geom_rug(alpha = 0.2) +
+  facet_wrap(~ group) +
+  labs(
+    x = "number of grades in Greek Mythology and Folklore",
+    y = "density",
+    fill = "sex",
+    colour = "sex"
+  )
+```
+
+
+Question 19
+
+```{r}
+
+```
 
 
 
