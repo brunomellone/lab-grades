@@ -2,6 +2,7 @@
 title: "Mellone"
 author: "Bruno Mellone"
 format: html
+
 ---
 
 ```{r}
@@ -16,7 +17,6 @@ here :: i_am("lab-grades.Rproj")
 
 ```{r}
 courses <- vroom(here("data","courses.csv"))
-
 ```
 ```{r}
 courses |>
@@ -32,6 +32,27 @@ courses |>
 
 # 1.2 Students
 
+```{r}
+students <- vroom(here("data","students.csv"))
+cols(
+  id = col_double(),
+  group = col_double(),
+  birth_date = col_date(format = ""),
+  sex = col_character(),
+  .delim = ","
+)
+```
+```{r}
+students <- vroom(
+  here("data", "students.csv"),
+  col_types = cols(
+    id = col_double(),
+    group = col_double(),
+    birth_date = col_date(), 
+    sex = col_factor()       
+  )
+)
+```
 
 
 
